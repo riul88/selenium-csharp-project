@@ -32,7 +32,7 @@ namespace Testing.Interpersonal.UI
         {
             try
             {
-                tc.driver.Navigate().GoToUrl(baseUrl);
+                tc.driver.Navigate().GoToUrl(tc.BaseUrl);
                 tc.AssertNoJavaScriptError();
 
                 //If logged in skip login process
@@ -57,7 +57,7 @@ namespace Testing.Interpersonal.UI
                 tc.Find(By.XPath(@"//input[@name='user_password']"), "Password input").SendKeys("qwer1234");
                 tc.Click(By.XPath(@"//input[@name='submit']"));
 
-                Assert.AreEqual("Menu", tc.Find(By.XPath(@"//div[contains(@class,'header-bar-title')]/h2"), "Main screen label").Text);
+                Assert.AreEqual("Menu", tc.Find(By.XPath(@"//div[contains(@class,'header-title')]/h2"), "Main screen label").Text);
             }
             catch (Exception ex)
             {
@@ -83,7 +83,7 @@ namespace Testing.Interpersonal.UI
                 }
 
                 tc.Click(By.XPath(@"//*[contains(text(),'Logout')]/.."), "Logout button");
-                Assert.AreEqual("Internal website", tc.Find(By.XPath(@"//div[contains(@class,'header-bar-title')]/h2"), "Main screen label").Text);
+                Assert.AreEqual("Internal website", tc.Find(By.XPath(@"//div[contains(@class,'header-title')]/h2"), "Main screen label").Text);
             }
             catch (Exception ex)
             {

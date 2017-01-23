@@ -6,6 +6,7 @@ using OpenQA.Selenium.IE;
 using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Remote;
 using System;
+using Testing.Common;
 
 //Copyright (C) 2017 Raul Robledo <raul.robledo at acm.org>
 //
@@ -25,19 +26,10 @@ namespace Testing.Common
 {
     public class TestCase
     {
-        #region Configurable variables
-
-        protected const string baseUrl = @"http://gitlab:81";//@"http://int.raulrobledo.com"
-        protected const string firefoxPath = @"C:\Program Files\Mozilla Firefox 47\firefox.exe";
-        protected const Browser capabilities = Browser.Firefox;
-        protected const bool useRemote = false;
-        protected const string remoteUrl = null;
-
-        #endregion
-
         #region Internal variables
+        protected TestingSection Config;
         protected static ILogger LOG = LogFactory.GetLogger();
-        private IWebDriver _driver;
+        protected IWebDriver _driver;
         public IWebDriver driver
         {
             get
@@ -45,18 +37,26 @@ namespace Testing.Common
                 return _driver;
             }
         }
-        public enum Browser {
-            Firefox,
-            Chrome,
-            IE
-        };
+        public string BaseUrl
+        {
+            get
+            {
+                return Config.BaseUrl;
+            }
+        }
         #endregion
+
+        public TestCase()
+        {
+            Config = (Testing.Common.TestingSection)System.Configuration.ConfigurationManager.GetSection("testing");
+        }
 
         #region Test init and cleaup
         [TestInitialize]
         public void Setup()
         {
-            BuildDriver(!useRemote, DesiredCapabilities.Firefox(), remoteUrl);
+            var options = BuildOptions();
+            BuildDriver(options);
         }
 
         [TestCleanup]
@@ -68,46 +68,71 @@ namespace Testing.Common
 
         #region Helpers
 
-        public void BuildDriver(bool localDriver, DesiredCapabilities capabilities, string remoteUrl = null)
+        public DriverOptions BuildOptions()
         {
-            capabilities.IsJavaScriptEnabled = true;
+            switch (Config.Browser)
+            {
+                case "chrome":
+                    return new ChromeOptions();
+                case "ie":
+                    return new InternetExplorerOptions();
+                default:
+                    return new FirefoxOptions();
+            }
+        }
+
+        public void BuildDriver(DriverOptions options)
+        {
+            var localDriver = !Config.Remote.ElementInformation.IsPresent;
+            
             if (localDriver)
             {
-                BuildDriverLocal(capabilities);
+                BuildDriverLocal(options);
             }
             else
             {
-                if (String.IsNullOrEmpty(remoteUrl))
+                if (String.IsNullOrEmpty(Config.Remote.Url))
                     throw new Exception("Missing remote server Url");
-                BuildDriverRemote(capabilities, remoteUrl);
+                BuildDriverRemote(options);
             }
             _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(localDriver ? 1 : 5));
             _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(60));
             _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(localDriver ? 1 : 5));
         }
 
-        private void BuildDriverLocal(DesiredCapabilities capabilities)
+        private void BuildDriverLocal(DriverOptions options)
         {
-            if (capabilities.BrowserName == "chrome")
+            switch (Config.Browser)
             {
-                _driver = new ChromeDriver();
-            }
-            else if (capabilities.BrowserName == "ie")
-            {
-                _driver = new InternetExplorerDriver();
-            }
-            else
-            {
-                var profile = new FirefoxProfile();
-                profile.SetPreference(@"webdriver.firefox.bin", firefoxPath);
-                //var binary = new FirefoxBinary(firefoxPath);
-                _driver = new FirefoxDriver(profile);
+                case "chrome":
+                    _driver = new ChromeDriver();
+                    break;
+                case "ie":
+                    _driver = new InternetExplorerDriver();
+                    break;
+                default:
+                    {
+                        FirefoxOptions firefoxOptions;
+                        if (Config.Firefox.ElementInformation.IsPresent && options is FirefoxOptions)
+                        {
+                            firefoxOptions = (FirefoxOptions)options;
+                            var profile = new FirefoxProfile();
+                            profile.SetPreference(@"webdriver.firefox.bin", Config.Firefox.Path);
+                            firefoxOptions.Profile = profile;
+                        }
+                        else
+                        {
+                            firefoxOptions = new FirefoxOptions();
+                        }
+                        _driver = new FirefoxDriver(firefoxOptions);
+                    }
+                    break;
             }
         }
 
-        private void BuildDriverRemote(DesiredCapabilities capabilities, string remoteUrl)
+        private void BuildDriverRemote(DriverOptions options)
         {
-            _driver = new OpenQA.Selenium.Remote.RemoteWebDriver(new Uri(remoteUrl), capabilities);
+            _driver = new OpenQA.Selenium.Remote.RemoteWebDriver(new Uri(Config.Remote.Url), options.ToCapabilities());
         }
 
         public bool IsElementPresent(By by)

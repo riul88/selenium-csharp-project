@@ -44,7 +44,7 @@ namespace Testing.Interpersonal.UI
                 //tc.Find(By.XPath(@"//input[@name='user_password']"), "Password input").SendKeys("qwer1234");
                 //tc.Click(By.XPath(@"//input[@name='submit']"));
 
-                Assert.AreEqual("List of students", tc.Find(By.XPath(@"//div[contains(@class,'header-bar-title')]/h2"), "Menu").Text);
+                Assert.AreEqual("List of students", tc.Find(By.XPath(@"//div[contains(@class,'header-title')]/h2"), "Menu").Text);
 
                 Login.PerformUserLogout(tc);
             }
