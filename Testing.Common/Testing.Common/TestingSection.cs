@@ -65,6 +65,17 @@ namespace Testing.Common
             set
             { this["remote"] = value; }
         }
+
+        [ConfigurationProperty("driver")]
+        public DriverElement Driver
+        {
+            get
+            {
+                return (DriverElement)this["driver"];
+            }
+            set
+            { this["driver"] = value; }
+        }
     }
 
     public class RemoteElement : ConfigurationElement
@@ -82,6 +93,63 @@ namespace Testing.Common
             }
         }
     }
+
+    public class DriverElement : ConfigurationElement
+    {
+        [ConfigurationProperty("implicitlyWait", DefaultValue = "0", IsRequired = false)]
+        public int ImplicitlyWait
+        {
+            get
+            {
+                int value;
+                if (int.TryParse(this["implicitlyWait"].ToString(), out value))
+                {
+                    return value;
+                }
+                return 0;
+            }
+            set
+            {
+                this["implicitlyWait"] = value.ToString();
+            }
+        }
+
+        [ConfigurationProperty("setPageLoadTimeout", DefaultValue = "0", IsRequired = false)]
+        public int SetPageLoadTimeout
+        {
+            get
+            {
+                int value;
+                if (int.TryParse(this["setPageLoadTimeout"].ToString(), out value))
+                {
+                    return value;
+                }
+                return 0;
+            }
+            set
+            {
+                this["setPageLoadTimeout"] = value.ToString();
+            }
+        }
+
+        [ConfigurationProperty("setScriptTimeout", DefaultValue = "0", IsRequired = false)]
+        public int SetScriptTimeout
+        {
+            get
+            {
+                int value;
+                if (int.TryParse(this["setScriptTimeout"].ToString(), out value))
+                {
+                    return value;
+                }
+                return 0;
+            }
+            set
+            {
+                this["setScriptTimeout"] = value.ToString();
+            }
+        }
+   }
 
     public class FirefoxElement : ConfigurationElement
     {

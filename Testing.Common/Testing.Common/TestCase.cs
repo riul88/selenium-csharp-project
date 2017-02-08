@@ -95,9 +95,9 @@ namespace Testing.Common
                     throw new Exception("Missing remote server Url");
                 BuildDriverRemote(options);
             }
-            _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(localDriver ? 1 : 5));
-            _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(60));
-            _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(localDriver ? 1 : 5));
+            _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(Config.Driver.ImplicitlyWait));
+            _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(Config.Driver.SetPageLoadTimeout));
+            _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(Config.Driver.SetScriptTimeout));
         }
 
         private void BuildDriverLocal(DriverOptions options)
@@ -118,6 +118,7 @@ namespace Testing.Common
                             firefoxOptions = (FirefoxOptions)options;
                             var profile = new FirefoxProfile();
                             profile.SetPreference(@"webdriver.firefox.bin", Config.Firefox.Path);
+                            firefoxOptions.BrowserExecutableLocation = Config.Firefox.Path;
                             firefoxOptions.Profile = profile;
                         }
                         else
@@ -152,7 +153,7 @@ namespace Testing.Common
         //</script>
         public void AssertNoJavaScriptError()
         {
-            Assert.IsFalse(IsElementPresent(By.XPath("//body[@JSError]")));
+            Assert.IsFalse(IsElementPresent(By.XPath("//body[@JSError]")), "JSError found in the page");
         }
 
         public IWebElement Find(By by, string label = null)
