@@ -70,34 +70,44 @@ namespace Testing.Common
 
         public DriverOptions BuildOptions()
         {
+            DriverOptions options;
             switch (Config.Browser)
             {
                 case "chrome":
-                    return new ChromeOptions();
+                    options = new ChromeOptions();
+                    break;
                 case "ie":
-                    return new InternetExplorerOptions();
+                    options = new InternetExplorerOptions();
+                    break;
                 default:
-                    return new FirefoxOptions();
+                    options = new FirefoxOptions();
+                    if (Config.Firefox.ElementInformation.IsPresent)
+                    {
+                        ((FirefoxOptions)options).BrowserExecutableLocation = Config.Firefox.Path;
+                    }
+                    break;
             }
+            return options;
         }
 
         public void BuildDriver(DriverOptions options)
         {
-            var localDriver = !Config.Remote.ElementInformation.IsPresent;
-            
-            if (localDriver)
+            if (!Config.Remote.ElementInformation.IsPresent)
             {
                 BuildDriverLocal(options);
             }
             else
             {
-                if (String.IsNullOrEmpty(Config.Remote.Url))
+                if (string.IsNullOrEmpty(Config.Remote.Url))
                     throw new Exception("Missing remote server Url");
                 BuildDriverRemote(options);
             }
-            _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(Config.Driver.ImplicitlyWait));
-            _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(Config.Driver.SetPageLoadTimeout));
-            _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(Config.Driver.SetScriptTimeout));
+            if (Config.Driver.ElementInformation.IsPresent)
+            {
+                _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(Config.Driver.ImplicitlyWait));
+                _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(Config.Driver.SetPageLoadTimeout));
+                _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(Config.Driver.SetScriptTimeout));
+            }
         }
 
         private void BuildDriverLocal(DriverOptions options)
@@ -105,35 +115,33 @@ namespace Testing.Common
             switch (Config.Browser)
             {
                 case "chrome":
-                    _driver = new ChromeDriver();
+                    _driver = new ChromeDriver((ChromeOptions)options);
                     break;
                 case "ie":
-                    _driver = new InternetExplorerDriver();
+                    _driver = new InternetExplorerDriver((InternetExplorerOptions)options);
                     break;
                 default:
-                    {
-                        FirefoxOptions firefoxOptions;
-                        if (Config.Firefox.ElementInformation.IsPresent && options is FirefoxOptions)
-                        {
-                            firefoxOptions = (FirefoxOptions)options;
-                            var profile = new FirefoxProfile();
-                            profile.SetPreference(@"webdriver.firefox.bin", Config.Firefox.Path);
-                            firefoxOptions.BrowserExecutableLocation = Config.Firefox.Path;
-                            firefoxOptions.Profile = profile;
-                        }
-                        else
-                        {
-                            firefoxOptions = new FirefoxOptions();
-                        }
-                        _driver = new FirefoxDriver(firefoxOptions);
-                    }
+                    _driver = new FirefoxDriver((FirefoxOptions)options);
                     break;
             }
         }
 
         private void BuildDriverRemote(DriverOptions options)
         {
-            _driver = new OpenQA.Selenium.Remote.RemoteWebDriver(new Uri(Config.Remote.Url), options.ToCapabilities());
+            ICapabilities capabilities;
+            switch (Config.Browser)
+            {
+                case "chrome":
+                    capabilities = DesiredCapabilities.Chrome();
+                    break;
+                case "ie":
+                    capabilities = DesiredCapabilities.InternetExplorer();
+                    break;
+                default:
+                    capabilities = DesiredCapabilities.Firefox();
+                    break;
+            }
+            _driver = new OpenQA.Selenium.Remote.RemoteWebDriver(new Uri(Config.Remote.Url), capabilities);
         }
 
         public bool IsElementPresent(By by)
@@ -164,7 +172,7 @@ namespace Testing.Common
             }
             catch (Exception ex)
             {
-                throw new Exception(String.Format("Unable to find element {0}", label), ex);
+                throw new Exception(string.Format("Unable to find element {0}", label), ex);
             }
         }
 
@@ -182,7 +190,7 @@ namespace Testing.Common
             }
             catch (Exception ex)
             {
-                throw new Exception(String.Format("Unable to click element {0}", label), ex);
+                throw new Exception(string.Format("Unable to click element {0}", label), ex);
             }
         }
 
@@ -205,7 +213,7 @@ namespace Testing.Common
             }
             catch (Exception ex)
             {
-                throw new Exception(String.Format("Unable to move to element {0}", label), ex);
+                throw new Exception(string.Format("Unable to move to element {0}", label), ex);
             }
         }
 
