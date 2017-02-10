@@ -114,7 +114,7 @@ namespace Testing.Common
             }
         }
 
-        [ConfigurationProperty("setPageLoadTimeout", DefaultValue = "0", IsRequired = false)]
+        [ConfigurationProperty("setPageLoadTimeout", DefaultValue = "30", IsRequired = false)]
         public int SetPageLoadTimeout
         {
             get

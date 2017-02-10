@@ -102,12 +102,9 @@ namespace Testing.Common
                     throw new Exception("Missing remote server Url");
                 BuildDriverRemote(options);
             }
-            if (Config.Driver.ElementInformation.IsPresent)
-            {
-                _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(Config.Driver.ImplicitlyWait));
-                _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(Config.Driver.SetPageLoadTimeout));
-                _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(Config.Driver.SetScriptTimeout));
-            }
+            _driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(Config.Driver.ImplicitlyWait));
+            _driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(Config.Driver.SetPageLoadTimeout));
+            _driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromSeconds(Config.Driver.SetScriptTimeout));
         }
 
         private void BuildDriverLocal(DriverOptions options)
@@ -161,7 +158,16 @@ namespace Testing.Common
         //</script>
         public void AssertNoJavaScriptError()
         {
-            Assert.IsFalse(IsElementPresent(By.XPath("//body[@JSError]")), "JSError found in the page");
+            Assert.IsFalse(IsElementPresent(By.XPath("//body[@JSError]")), string.Format("JSError found in the page {0}", driver.Url));
+        }
+
+        public void AssertJavaScriptError(bool removeAttribute = true)
+        {
+            Assert.IsFalse(IsElementPresent(By.XPath("//body[@JSError]")), string.Format("JSError not found in the page {0}", driver.Url));
+            if (removeAttribute)
+            {
+                ((IJavaScriptExecutor)driver).ExecuteScript(@"document.getElementsByTagName('body')[0].removeAttribute('JSError');");
+            }
         }
 
         public IWebElement Find(By by, string label = null)
